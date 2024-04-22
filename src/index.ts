@@ -1,14 +1,19 @@
-import  express,{Express,Request,Response} from "express";
+import express, { Express, Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
+
+
 import { PORT } from "./secrets";
 import rootRouter from "./routes";
-import { errorHandler } from "./error";
+import { errorMiddleware } from "./middleware/error";
 
 
 
 const app:Express = express();
 app.use(express.json());
 
-app.get('/api',rootRouter)
+
+export const  prisma = new PrismaClient();
+app.use('/api',rootRouter)
 
 app.get("/", async (req: Request, res: Response) => {
 	try {
@@ -27,8 +32,8 @@ app.get("/", async (req: Request, res: Response) => {
 
 
 
-app.use(errorHandler);
+app.use(errorMiddleware);
 
-app.listen(3001, () => {
-	console.log(`Server 💽 listening on PORT ${(PORT)}`);
+app.listen(PORT, () => {
+	console.log(`Server 💽 listening on PORT ${PORT}`);
 });

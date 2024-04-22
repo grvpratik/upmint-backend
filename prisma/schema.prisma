@@ -12,3 +12,150 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model AdminUser{
+   id          String  @id @default(cuid())
+   username String @unique
+   password String @unique
+}
+
+
+model Social {
+  id          String  @id @default(cuid())
+  x           String?
+  discord     String?
+  website     String?
+  marketplace String?
+  projectId   String  @unique 
+  Project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model MintInfo {
+  id         String    @id @default(cuid())
+  supply     Int?
+  mintPrice  Int?
+  startTime  String?
+  mintDate   DateTime?
+  mintInfoId String    @unique 
+  Project    Project   @relation(fields: [mintInfoId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id             String           @id @default(cuid())
+  nameSlug       String           @unique
+  name           String?
+  description    String?
+  blockchain     BlockChain?
+  imageUrl       String?
+  bannerUrl      String?
+  imageArray   String[]
+
+  rating ProjectRating?
+
+  whitelist      Boolean          @default(false)
+  featured       Boolean          @default(false)
+  verified       Boolean          @default(false)
+  prevFollower   Int?
+  currFollower   Int?
+  accountCreated DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  userProfileId  String?
+  mintInfo       MintInfo?
+  social         Social?
+  userProfile    UserProfile?     @relation(fields: [userProfileId], references: [id])
+  tags           TagsOnProjects[]
+}
+
+
+model ProjectRating{
+ 
+  id        String    @id @default(cuid())
+
+ popularityScore Int
+ popularityCmt String?
+
+
+ credibilityScore Int
+ credibilityCmt String?
+
+utilityScore Int
+utilityCmt String?
+
+projectId   String  @unique 
+  Project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+
+
+model UserProfile {
+  id        String    @id @default(cuid())
+  watchList Project[]
+  userId      String      @unique
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id      String  @id @default(cuid())
+  name    String
+  email   String
+  picture String?
+  role UserRole @default(FREE)
+  userProfile UserProfile?
+}
+
+model Tags {
+  id             String           @id @default(cuid())
+  name           String
+  TagsOnProjects TagsOnProjects[]
+}
+
+model TagsOnProjects {
+  projectId String
+  tagsId    String
+  project   Project @relation(fields: [projectId], references: [id])
+  tags      Tags    @relation(fields: [tagsId], references: [id])
+
+  @@id([projectId, tagsId])
+}
+/////
+model TwitterProfile{
+  id     String           @id @default(cuid())
+  userId String
+  name String
+  picture String
+  follower Int?
+  role TwitterRole?
+
+}
+
+enum TwitterRole{
+INFLUENCER
+PROJECT
+}
+
+enum UserRole{
+  FREE
+  PAID
+}
+
+enum BlockChain{
+  SOLANA
+  ETHEREUM
+  BITCOIN
+}
+
+
+// BLOG POST schema from here  
+
+model Post{
+   id     String           @id @default(cuid())
+   name String
+   nameSlug String @unique
+   bannerImage String
+   description String
+     createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  content String[]
+  
+}
