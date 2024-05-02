@@ -17,15 +17,15 @@ export const errorHandler = (method: Function) => {
 			} else {
 				if (error instanceof ZodError) {
 					exception = new BadRequestsException(
-						"Unprocessable entity.",
-						4000,
-						
+						"validation error",
+						ErrorCode.UNPROCESSABLE_ENTITY,
+						error
 					);
 				} else {
 					exception = new InternalException(
 						"Something went wrong!",
 						error,
-						500
+						ErrorCode.INTERNAL_EXCEPTION
 					);
 				}
 			}

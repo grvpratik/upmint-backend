@@ -1,19 +1,27 @@
 import express, { Express, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import cors from "cors";
 
+import { PrismaClient } from "@prisma/client";
 
 import { PORT } from "./secrets";
 import rootRouter from "./routes";
 import { errorMiddleware } from "./middleware/error";
+import { S3Client } from "@aws-sdk/client-s3";
 
-
-
-const app:Express = express();
+const app: Express = express();
 app.use(express.json());
 
+app.use(cors<Request>());
 
-export const  prisma = new PrismaClient();
-app.use('/api',rootRouter)
+export const prisma = new PrismaClient();
+export const s3Client = new S3Client({
+	region: process.env.AWS_REGION,
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY as string,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
+	},
+});
+app.use("/api", rootRouter);
 
 app.get("/", async (req: Request, res: Response) => {
 	try {
@@ -24,13 +32,6 @@ app.get("/", async (req: Request, res: Response) => {
 	}
 	return;
 });
-
-
-
-
-
-
-
 
 app.use(errorMiddleware);
 

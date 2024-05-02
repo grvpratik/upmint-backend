@@ -60,11 +60,22 @@ model Project {
   accountCreated DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  userProfileId  String?
+  ProfileId  String?
   mintInfo       MintInfo?
   social         Social?
-  userProfile    UserProfile?     @relation(fields: [userProfileId], references: [id])
-  tags           TagsOnProjects[]
+  watchList   WatchList[]
+  tags           Tags[]
+}
+
+
+model WatchList{
+Project       Project     @relation(fields: [projectId], references: [id])
+projectId     String
+  
+profile       Profile     @relation(fields: [profileId], references: [id])
+profileId String
+
+  @@id(profileId)
 }
 
 
@@ -88,9 +99,10 @@ projectId   String  @unique
 
 
 
-model UserProfile {
+model Profile {
   id        String    @id @default(cuid())
-  watchList Project[]
+  newsletter Boolean @default(false)
+    watchList   WatchList[]
   userId      String      @unique
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -101,23 +113,15 @@ model User {
   email   String
   picture String?
   role UserRole @default(FREE)
-  userProfile UserProfile?
+  userProfile Profile?
 }
-
 model Tags {
   id             String           @id @default(cuid())
-  name           String
-  TagsOnProjects TagsOnProjects[]
+  name           String @unique
+ projects Project[]
 }
 
-model TagsOnProjects {
-  projectId String
-  tagsId    String
-  project   Project @relation(fields: [projectId], references: [id])
-  tags      Tags    @relation(fields: [tagsId], references: [id])
 
-  @@id([projectId, tagsId])
-}
 /////
 model TwitterProfile{
   id     String           @id @default(cuid())
