@@ -6,175 +6,194 @@ import { NotFoundException } from "../exceptions/not-found";
 import { ErrorCode } from "../exceptions/root";
 import ProjectSchema from "../schema/project";
 
-export const projectsGet = async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-) => {
-	const projects = await prisma.project.findMany();
-	res.json({
-		total: projects.length,
-		result: projects,
-	});
-
-	// await prisma.profile.deleteMany()
-	// await prisma.user.deleteMany();
-};
-
+// GET /projects/search
 export const projectsSearch = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
-	const searchString = req.query.q ? req.query.q.toString() : "";
-	const page = req.query.page ? parseInt(req.query.page.toString()) : 1;
-	const size = req.query.size ? parseInt(req.query.size.toString()) : 10;
-	const chain = req.query.network
-		? req.query.network.toString().toUpperCase()
-		: "";
-console.log(chain)
-	const network =
-		chain === BlockChain.SOLANA ||
-		chain === BlockChain.BITCOIN ||
-		chain === BlockChain.ETHEREUM
-			? chain
-			: undefined;
-	console.log(network);
-	const search = await prisma.project.findMany({
-		where: {
-			blockchain: network, // Assuming blockchain is a string field
+	try {
+		// Extract search parameters from query string
+		const searchString = req.query.search ? req.query.search.toString() : "";
+		const page = req.query.page ? parseInt(req.query.page.toString()) : 1;
+		const size = req.query.size ? parseInt(req.query.size.toString()) : 10;
+		const chain = req.query.network
+			? req.query.network.toString().toUpperCase()
+			: "";
 
-			OR: [
-				{
-					name: {
-						contains: searchString, // Using contains to find projects with names containing the provided string
-					},
-				},
-				{
-					description: {
-						contains: searchString, // Using contains to find projects with descriptions containing the provided string
-					},
-				},
-			],
-		},
-		skip: (page - 1) * size, // Calculate the number of records to skip
-		take: size, // size the number of records returned per page
-	});
+		// Validate and format blockchain network
+		const network =
+			chain === BlockChain.SOLANA ||
+			chain === BlockChain.BITCOIN ||
+			chain === BlockChain.ETHEREUM
+				? chain
+				: undefined;
 
-	const count = search.length;
-	res.json({ count, search });
+		// Decode search string
+		const decodedSearch = decodeURIComponent(searchString);
+
+		// Perform search using Prisma
+		const search = await prisma.project.findMany({
+			where: {
+				blockchain: network,
+				name: {
+					contains: decodedSearch,
+					mode: "insensitive",
+				},
+			},
+			skip: (page - 1) * size,
+			take: size,
+		});
+
+		// Return search results
+		const count = search.length;
+		res.json({ count, result: search });
+	} catch (error) {
+		next(error);
+	}
 };
 
+// POST /projects
 export const projectsPost = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
-	
-	// await prisma.tagsOnProjects.delete({
-	// 	where: {
-	// 		projectId_tagsId: {
-	// 			projectId: "clvlc7m070000epdyxxt7rmlt",
-	// 			tagsId: "clvlc7m070003epdy3j10jiyl",
-	// 		},
-	// 	},
-	// });
-	const parsed = ProjectSchema.parse(req.body);
-	// console.log(parsed);
-	const {
-		nameSlug,
-		name,
-		description,
-		blockchain,
-		imageUrl,
-		bannerUrl,
+	try {
+		// Validate incoming project data
+		const parsed = ProjectSchema.parse(req.body);
 
-		whitelist,
-		featured,
-		verified,
-
-		mintInfo: mintInfoData,
-		social: socialData,
-		tags: tagsData,
-	} = parsed;
-//here tag is array of string
-	    const tags = await Promise.all(
-				tagsData.map(async (tagName:string) => {
-					const existingTag = await prisma.tags.findUnique({
-						where: { name: tagName },
-					});
-					if (existingTag) {
-						return existingTag;
-					} else {
-						return prisma.tags.create({
-							data: { name: tagName },
-						});
-					}
-				})
-			);
-	// console.log(req.body);
-	// const chain = blockchain ? blockchain.toUpperCase() : null;
-	// const network =
-	// 	chain === BlockChain.SOLANA ||
-	// 	chain === BlockChain.BITCOIN ||
-	// 	chain === BlockChain.ETHEREUM
-	// 		? chain
-	// 		: undefined;
-
-	const project = await prisma.project.create({
-		data: {
+		// Extract project data from parsed object
+		const {
 			nameSlug,
 			name,
 			description,
 			blockchain,
 			imageUrl,
 			bannerUrl,
-
 			whitelist,
 			featured,
 			verified,
+			mintInfo: mintInfoData,
+			social: socialData,
+			tags: tagsData,
+		} = parsed;
 
-			mintInfo: {
-				create: mintInfoData, // Create MintInfo if provided
+		// Find or create tags associated with the project
+		const tags = await Promise.all(
+			tagsData.map(async (tagName: string) => {
+				const existingTag = await prisma.tags.findUnique({
+					where: { name: tagName },
+				});
+				if (existingTag) {
+					return existingTag;
+				} else {
+					return prisma.tags.create({
+						data: { name: tagName },
+					});
+				}
+			})
+		);
+
+		// Create the project in the database
+		const project = await prisma.project.create({
+			data: {
+				nameSlug,
+				name,
+				description,
+				blockchain,
+				imageUrl,
+				bannerUrl,
+				whitelist,
+				featured,
+				verified,
+				mintInfo: {
+					create: mintInfoData,
+				},
+				social: {
+					create: socialData,
+				},
+				tags: {
+					connect: tags.map((tag) => ({ id: tag.id })),
+				},
 			},
-			social: {
-				create: socialData, // Create Social if provided
+			include: {
+				tags: true,
 			},
-			tags: {
-				connect: tags.map((tag) => ({ id: tag.id })),
-			},
-		},
-		include: {
-			tags: true,
-		},
-		// Exclude the rating field from being included in the created project
-	});
-	res.json(project);
+		});
+
+		// Return the created project
+		res.json(project);
+	} catch (error) {
+		next(error);
+	}
 };
 
-export const projectsPatch = async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-) => {};
-
+// DELETE /projects/:id
 export const projectsDelete = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
 	try {
+		// Find and delete a project by its name slug
 		const product = await prisma.project.findFirstOrThrow({
 			where: {
 				nameSlug: req.params.id,
 			},
 		});
 		res.json(product);
-	} catch (err) {
-		// console.log(err);
+	} catch (error) {
+		// Handle project not found error
 		throw new NotFoundException(
 			"Project not found.",
 			ErrorCode.PROJECT_NOT_FOUND
 		);
+	}
+};
+
+//PATCH /projects/:id
+
+export const projectsPatch = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => { }
+
+
+// GET /tags
+export const tagsList = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		// Retrieve all tags from the database
+		const tags = await prisma.tags.findMany();
+		res.json(tags);
+	} catch (error) {
+		next(error);
+	}
+};
+
+// GET /tags/:name/projects
+export const tagProjectList = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		// Find projects associated with a specific tag
+		const tags = await prisma.tags.findUnique({
+			where: {
+				name: req.params.name,
+			},
+			include: {
+				projects: true,
+			},
+		});
+		res.json(tags);
+	} catch (error) {
+		next(error);
 	}
 };
