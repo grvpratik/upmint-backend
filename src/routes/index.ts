@@ -1,8 +1,10 @@
 import { Router } from "express";
 import authRouter from "./auth";
 import projectRouter from "./project";
-import postRouter from "./post";
+
 import { uploadRouter } from "./uplaod";
+import articleRouter from "./article";
+
 
 
 
@@ -17,7 +19,7 @@ rootRouter.use('/projects', projectRouter)
 
 //For blog posts
 
-rootRouter.use("/posts", postRouter);
+rootRouter.use("/articles", articleRouter);
 
 
 //for image upload

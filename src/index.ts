@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use(cors<Request>());
 
+
 export const prisma = new PrismaClient();
 export const s3Client = new S3Client({
 	region: process.env.AWS_REGION,
@@ -32,6 +33,7 @@ app.get("/", async (req: Request, res: Response) => {
 	}
 	return;
 });
+
 
 app.use(errorMiddleware);
 

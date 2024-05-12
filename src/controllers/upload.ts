@@ -5,14 +5,12 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { s3Client } from "..";
 
-
-const FILE_SIZE_LIMIT:number = 5 * 1024 * 1024;;
-
+const FILE_SIZE_LIMIT: number = 5 * 1024 * 1024;
 
 const putObjectURL = async (filename: string, content: string) => {
 	const command = new PutObjectCommand({
 		Bucket: process.env.AWS_BUCKET,
-		Key: filename,
+		Key: `upmint-test/${filename} `,
 		ContentType: content,
 	});
 	const url = await getSignedUrl(s3Client, command);
@@ -21,7 +19,7 @@ const putObjectURL = async (filename: string, content: string) => {
 };
 const objectURL = async (key: any) => {
 	const command = new GetObjectCommand({
-		Bucket: "pratikgrv-s3-test-api",
+		Bucket: process.env.AWS_BUCKET,
 		Key: key,
 	});
 	const url = await getSignedUrl(s3Client, command);
@@ -35,7 +33,7 @@ export const imageUpload = async (
 	next: NextFunction
 ) => {
 	const { fileName, contentType, fileSize } = req.body;
-	console.log(fileName, contentType, fileSize);
+	// console.log(fileName, contentType, fileSize);
 	if (!fileName) {
 		return res.status(400).send({
 			success: false,

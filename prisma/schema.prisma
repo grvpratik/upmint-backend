@@ -93,6 +93,7 @@ model ProjectRating{
 utilityScore Int
 utilityCmt String?
 
+
 projectId   String  @unique 
   Project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
@@ -136,6 +137,7 @@ model TwitterProfile{
 enum TwitterRole{
 INFLUENCER
 PROJECT
+TEAM
 }
 
 enum UserRole{
@@ -160,6 +162,6 @@ model Post{
    description String
      createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  content String[]
+  content String
   
 }
