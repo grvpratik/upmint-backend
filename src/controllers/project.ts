@@ -130,7 +130,72 @@ export const projectsPatch = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
-) => {};
+) => {const parsed = ProjectSchema.parse(req.body);
+
+// Extract project data from parsed object
+const {
+	nameSlug,
+	name,
+	description,
+	blockchain,
+	imageUrl,
+	bannerUrl,
+	whitelist,
+	featured,
+	verified,
+	mintInfo: mintInfoData,
+	social: socialData,
+	tags: tagsData,
+} = parsed;
+
+// Find or create tags associated with the project
+const tags = await Promise.all(
+	tagsData.map(async (tagName: string) => {
+		const existingTag = await prisma.tags.findUnique({
+			where: { name: tagName },
+		});
+		if (existingTag) {
+			return existingTag;
+		} else {
+			return prisma.tags.create({
+				data: { name: tagName },
+			});
+		}
+	})
+);
+
+// Create the project in the database
+	const project = await prisma.project.update({
+		where: {
+		nameSlug:req.params.slug
+	},
+	data: {
+		nameSlug,
+		name,
+		description,
+		blockchain,
+		imageUrl,
+		bannerUrl,
+		whitelist,
+		featured,
+		verified,
+		mintInfo: {
+			update: mintInfoData,
+		},
+		social: {
+			update: socialData,
+		},
+		tags: {
+			connect: tags.map((tag) => ({ id: tag.id })),
+		},
+	},
+	include: {
+		tags: true,
+	},
+});
+
+// Return the created project
+res.json(project);};
 
 export const projectsDetails = async (
 	req: Request,
