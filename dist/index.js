@@ -46,3 +46,4 @@ app.use(error_1.errorMiddleware);
 app.listen(secrets_1.PORT, () => {
     console.log(`Server 💽 listening on PORT ${secrets_1.PORT}`);
 });
+exports.default = app;
