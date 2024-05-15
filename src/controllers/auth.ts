@@ -7,15 +7,13 @@ import { BadRequestsException } from "../exceptions/bad-request";
 import { ErrorCode } from "../exceptions/root";
 import { JWT_SECRET } from "../secrets";
 
-
 export const adminLogin = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
-	
 	const { username, password } = req.body;
-	
+
 	let user = await prisma.adminUser.findFirst({ where: { username } });
 	if (!user) {
 		throw new NotFoundException("User not found.", ErrorCode.USER_NOT_FOUND);
@@ -23,7 +21,8 @@ export const adminLogin = async (
 	if (!compareSync(password, user.password)) {
 		throw new BadRequestsException(
 			"Incorrect password",
-			ErrorCode.INCORRECT_PASSWORD,null
+			ErrorCode.INCORRECT_PASSWORD,
+			null
 		);
 	}
 
@@ -37,4 +36,8 @@ export const adminLogin = async (
 	res.json({ user, token });
 };
 
-export const userLogin = async (req: Request, res: Response, next: NextFunction) => {};
+export const userLogin = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {};

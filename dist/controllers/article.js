@@ -47,8 +47,8 @@ exports.articleGet = articleGet;
 const articleDelete = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const articles = yield __1.prisma.post.delete({
         where: {
-            nameSlug: req.params.slug
-        }
+            nameSlug: req.params.slug,
+        },
     });
     res.json(articles);
 });

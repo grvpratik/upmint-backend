@@ -51,9 +51,9 @@ export const articleDelete = async (
 ) => {
 	const articles = await prisma.post.delete({
 		where: {
-			nameSlug:req.params.slug
-		}
-	})
+			nameSlug: req.params.slug,
+		},
+	});
 
 	res.json(articles);
 };
@@ -65,14 +65,13 @@ export const articleDetails = async (
 ) => {
 	const slugId = req.params.slug;
 	console.log(slugId);
-	
-		const response = await prisma.post.findFirstOrThrow({
-			where: {
-				nameSlug: slugId,
-			},
-		});
-		res.json(response);
-	 
+
+	const response = await prisma.post.findFirstOrThrow({
+		where: {
+			nameSlug: slugId,
+		},
+	});
+	res.json(response);
 };
 
 export const articleUpdate = async (

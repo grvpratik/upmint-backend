@@ -123,7 +123,7 @@ const projectsPatch = (req, res, next) => __awaiter(void 0, void 0, void 0, func
     // Create the project in the database
     const project = yield __1.prisma.project.update({
         where: {
-            nameSlug: req.params.slug
+            nameSlug: req.params.slug,
         },
         data: {
             nameSlug,
@@ -158,7 +158,7 @@ const projectsDetails = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     console.log(slugId);
     const response = yield __1.prisma.project.findFirstOrThrow({
         where: {
-            nameSlug: slugId
+            nameSlug: slugId,
         },
     });
     res.json(response);
